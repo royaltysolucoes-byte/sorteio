@@ -1,4 +1,5 @@
 from fastapi import FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from pymongo.mongo_client import MongoClient
 from pymongo.server_api import ServerApi
@@ -6,6 +7,7 @@ from urllib.parse import quote_plus
 from dotenv import load_dotenv
 import os
 
+# Carregar variáveis de ambiente
 load_dotenv() 
 
 MONGO_USER = os.getenv("MONGO_USER")
@@ -22,15 +24,26 @@ client = MongoClient(uri, server_api=ServerApi('1'))
 db = client[MONGO_DB]
 collection = db["colaborador"]
 
+# Criar API
 app = FastAPI(title="API de Rifa")
 
+# Configuração do CORS
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # altere para ["https://seusite.com"] em produção
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# Modelo de dados
 class Usuario(BaseModel):
     nome: str
     cpf: str
     telefone: str
     numero: str
 
-
+# Rotas
 @app.post("/cadastrar")
 def cadastrar(usuario: Usuario):
     if collection.find_one({"cpf": usuario.cpf}):
